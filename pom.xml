@@ -94,6 +94,18 @@
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.0.0</version>
         </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>1.6.0</version>
+          <configuration>
+            <executableDependency>
+              <groupId>nets150.group</groupId>
+              <artifactId>nets150.group.maven.eclipse</artifactId>
+            </executableDependency>
+            <mainClass>nets150.group.maven.eclipse.App</mainClass>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>

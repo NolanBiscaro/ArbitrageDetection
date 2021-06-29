@@ -2,7 +2,6 @@
 package nets150.group.maven.eclipse;
 
 import java.net.URI;
-
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,8 +17,8 @@ public class App {
     private static List<Map<String, Object>> rates = new ArrayList<>();
     private static Graph g;
 
-    private static String[] altKeys = { "c2889aaad3i8rjpavj20", "c283sd2ad3i8rjpap4cg" };
-    private static String webSocketApiKey = "c28qk5qad3if6b4c2p3g";
+    private static String[] altKeys = { "c3d6p7aad3i868dosgng", "c3d6piaad3i868dosgtg" };
+    private static String webSocketApiKey = "c283sd2ad3i8rjpap4cg";
     private static int swapNum = 0;
     private static Map<String, Integer> currencyMap;
     
@@ -62,25 +61,22 @@ public class App {
 
     }
 
-    private static void getForexRatesForBase(String base) {
+    private static void getForexRatesForBase(String base, int i) {
         HttpResponse<JsonNode> raw = null;
         try {
-
             raw = Unirest.get("/forex/rates").queryString("base", base).asJson();
-
             rates.add(raw.getBody().getObject().getJSONObject("quote").toMap());
         } catch (kong.unirest.json.JSONException e) {
             System.out.println("Current API key too hot... swapping for new one.");
             System.out.println("\n");
             swapApiKeys();
-            getForexRatesForBase(base);
+            getForexRatesForBase(base, i);
         }
 
     }
 
     private static double calcWeight(double weight) {
-
-        return -1 * Math.log(weight);
+      return -1 * Math.floor(Math.log(weight)); 
     }
 
     private static void buildGraph() {
@@ -89,12 +85,11 @@ public class App {
         System.out.println("Building Graph...");
         System.out.println("\n");
         for (int i = 0; i < currencies.length; i++) {
-            getForexRatesForBase(currencies[i]);
-            Object[] exchanges = rates.get(i).values().toArray();
-            for (int j = 0; j < exchanges.length; j++) {
-                if (i != j) {
-                    String d = exchanges[j].toString();
-                    double weight = calcWeight(Double.valueOf(d).doubleValue());
+            getForexRatesForBase(currencies[i], i);
+            for (int j = 0; j < currencies.length; j++) {
+                if (currencies[i] != currencies[j]) {
+                    String d = rates.get(i).get(currencies[j]).toString();
+                    double weight = calcWeight(Double.parseDouble(d));
                     g.addEdge(i, j, weight, false);
 
                 }
@@ -156,7 +151,7 @@ public class App {
                 + "                                   __/ |                                            \n"
                 + "                                  |___/                                             \n"
                 + "                                                                                    \n"                                                                                               
-                + "Written by: Nolan Biscaro, Elyse Schetty, and Baptiste Audenaert \n";
+                + "Written by Nolan Biscaro";
         System.out.println(title + "\n");
         
 
@@ -165,11 +160,20 @@ public class App {
 
         WebSocketClientEndpoint ws = new WebSocketClientEndpoint(
                 new URI("wss://ws.finnhub.io?token=c20ra02ad3iec96dij7g"));
+        
+        Scanner s = new Scanner(System.in);
+ 
+        //allow users to choose between looking amongst all currencies, or specifying which. 
+        System.out.println("Do you wish to specify which currencies to analyze? (y/n)"); 
+        if (s.nextLine().equals("y")){
+            System.out.println("Please enter currencies seperated by a comma (ex. USD, AUD, CAD)");
+            currencies = s.nextLine().split(",");
+        }
+        
 
         g = new Graph(currencies.length);
         buildGraph();
-        Scanner s = new Scanner(System.in);
-        System.out.println(
+                System.out.println(
                 "Please enter a threshold. The threshold is defined as the minimum percentage increase for an arbitrage opportunity to be recognized. (Recommended 1% where input 1 = 1%)");
         Double threshold = Double.parseDouble(s.nextLine());
         BellmanFord bf = new BellmanFord(g, threshold);
@@ -189,7 +193,7 @@ public class App {
         bf.run(0);
 
         List<Integer> path = bf.getNegativeCycles();
-        if (path == null) {
+        if (path.size() == 0) {
             System.out.println("No current arbitrage \n");
             String curr1 = currencies[bf.closestV1];
             String curr2 = currencies[bf.closestV2];
@@ -229,11 +233,18 @@ public class App {
         } else {
             System.out.println("ARBITRAGE FOUND");
             System.out.println("\n");
+            double change = 1;
             for (int i = 0; i < path.size() - 1; i++) {
-                System.out.println(currencies[path.get(i)] + "->" + currencies[path.get(i + 1)]
-                        + " rates:" + rates.get(path.get(i)).get(currencies[path.get(i + 1)]));
+              String rateString = rates.get(path.get(i)).get(currencies[path.get(i + 1)]).toString();  
+              double rate = Double.parseDouble(rateString); 
+              System.out.println(currencies[path.get(i)] + "->" + currencies[path.get(i + 1)]
+
+                        + " rates:" + rates.get(path.get(i)).get(currencies[path.get(i + 1)]) + "weight: " + g.getWeight(path.get(i),path.get(i + 1)));
+       
+              change *= rate;
             }
-            System.out.println("profit: " + getProfit(path) + "%");
+            double profit = Math.max(0, Math.abs(change - 1)); 
+            System.out.println("profit: " + profit + "%");
         }
 
     }

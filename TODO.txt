@@ -1,0 +1,23 @@
+1) Fix issue with threshold: Find way to ignore changes less than threshold
+
+2) Look at smallestDiff again (negatives)
+
+3) Switch back to log base e for approximating small percent diff
+
+4) Cant enforce threshold when checking edge, since we are not garuenteed to
+   have that edge in the cycle. Somehting needs to inerhnetly change aabout the
+   weights.
+
+   # Rough Work: 
+
+   Goal: Only record profit that is larger than 1% diff. 
+
+   Issue: We are not garunteed to get the cycle with the edge we landed on. 
+
+   Ideas: During run(), only record new distance if it is at least 1 diff.m
+   Therefore all negative cycle would be at least 1 diff
+
+
+   Maybe profits mapping to incorrect rates?
+
+   API keys are cooked?

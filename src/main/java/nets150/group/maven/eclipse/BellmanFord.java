@@ -33,29 +33,36 @@ public class BellmanFord {
         for (int i = 0; i < g.getSize() - 1; i++) {
             for (int u = 0; u < g.getSize(); u++) {
                 for (int v : g.outNeighbors(u)) {
-                    if (distance[u] != Integer.MAX_VALUE
-                            && (distance[u] + g.getWeight(u, v) + threshold) < distance[v]) {
-
-                        distance[v] = (distance[u] + g.getWeight(u, v));
-
+                  double candidateDiff = distance[u] + g.getWeight(u, v);
+                    if (distance[u] != Integer.MAX_VALUE 
+                        && candidateDiff < distance[v])  {
+                        distance[v] = candidateDiff;
                         parent[v] = u;
                     }
                 }
             }
         }
     }
-
+    
+    //final iteration of Bellman-Ford
     public int getNegativeCycleSource() {
         for (int u = 0; u < g.getSize(); u++) {
             for (int v : g.outNeighbors(u)) {
                 double diff = ((distance[u] + g.getWeight(u, v)) - distance[v]);
+                
+                //Keeping track of smallest difference in case no arbitrage
                 if (diff != 0 && diff > 0 && diff < closestDiff) {
                     closestV1 = u;
                     closestV2 = v;
+                    closestDiff = diff;
 
                 }
-                if (distance[u] != Integer.MAX_VALUE
-                        && (distance[u] + g.getWeight(u, v)) + threshold < distance[v]) {
+                //candidateDiff refers to the potential new smallest diff, indicating neg cycle
+                double candidateDist = distance[u] + g.getWeight(u, v);
+                if (distance[u] != Integer.MAX_VALUE 
+                    && candidateDist < distance[v]) {
+                    System.out.println(u + "," + v + distance[v] + "," + candidateDist + " " + (distance[v] - candidateDist));
+                    parent[v] = u;
                     return v;
                 }
             }
@@ -72,28 +79,24 @@ public class BellmanFord {
     }
 
     public List<Integer> getNegativeCycles() {
+        List<Integer> path = new ArrayList<>();
         int source = getNegativeCycleSource();
         if (source == -1) {
-            return null;
+          return path;
         }
-
-        List<Integer> path = new ArrayList<>();
         path.add(source);
         visited[source] = true;
         int curr = parent[source];
-        while (curr != source) {
-            if (visited[curr]) {
-
-                path.add(curr);
-                path = trimPath(curr, path);
-                Collections.reverse(path);
-                return path;
-            } else {
-                path.add(curr);
-                visited[curr] = true;
-                curr = parent[curr];
-            }
-
+        while (curr != source) { 
+          if (visited[curr]){
+            path.add(curr);
+            path = trimPath(curr, path); 
+            Collections.reverse(path); 
+            return path;
+          }
+          path.add(curr);
+          visited[curr] = true;
+          curr = parent[curr];
         }
         path.add(curr);
         Collections.reverse(path);

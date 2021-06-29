@@ -76,9 +76,9 @@ public class Graph {
             }
         }
         graph[u].put(v, weight);
-        if (isUndirected) {
-            graph[v].put(u, -1 * weight);
-        }
+       // if (isUndirected) {
+         //   graph[v].put(u, -1 * weight);
+        //}
         totalEdges++;
         return true;
     }
